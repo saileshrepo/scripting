@@ -46,23 +46,14 @@ if (!zomunk_csrf_valid($_POST['csrf'] ?? null)) {
     }
 }
 ?>
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Signup - Zomunk Lite</title>
-<link rel="stylesheet" href="assets/style.css">
-</head>
-<body>
-<div class="wrap">
-<header class="site"><h1><a href="index.php" style="text-decoration:none;color:inherit;">Zomunk Lite</a></h1></header>
+<?php
+require __DIR__ . '/_layout.php';
+zomunk_head('Signup - Flight Deal Alerts');
+?>
 <?php if (!empty($error)): ?>
-  <div class="flash err"><?= e($error) ?></div>
+  <div class="flash err" style="margin-top:28px;"><?= e($error) ?></div>
 <?php else: ?>
-  <div class="flash ok"><?= e($notice ?? 'You are on the list.') ?></div>
+  <div class="flash ok" style="margin-top:28px;"><?= e($notice ?? 'You are on the list.') ?></div>
 <?php endif; ?>
-<p><a class="btn" href="index.php">Back to deals</a></p>
-</div>
-</body>
-</html>
+<p><a class="btn" href="index.php">Back to the deal board</a></p>
+<?php zomunk_foot(); ?>

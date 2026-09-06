@@ -74,6 +74,9 @@ function zomunk_config(): array
     $config = [
         'root'     => $root,
         'provider' => zomunk_env('ZOMUNK_PROVIDER', 'sample'),
+        'candidate_provider' => zomunk_env('ZOMUNK_CANDIDATE_PROVIDER', 'sample'),
+        'verify_budget'      => zomunk_env_int('ZOMUNK_VERIFY_BUDGET', 40),
+        'travelpayouts'      => ['token' => zomunk_env('TRAVELPAYOUTS_TOKEN', '')],
         'base_url' => rtrim(zomunk_env('ZOMUNK_BASE_URL', 'http://localhost:8000'), '/'),
         'amadeus'  => [
             'client_id'     => zomunk_env('AMADEUS_CLIENT_ID', ''),

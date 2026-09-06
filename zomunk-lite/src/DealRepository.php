@@ -84,6 +84,20 @@ final class DealRepository
         );
     }
 
+    /** A calendar sweep sighting, recorded as a price-history point. */
+    public function recordCandidateObservation(int $routeId, FareCandidate $candidate): void
+    {
+        Db::execute(
+            'INSERT INTO fare_history (route_id, depart_month, depart_date, return_date, price,
+                                       currency, cabin, observed_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+                $routeId, $candidate->departMonth(), $candidate->departDate, $candidate->returnDate,
+                $candidate->price, $candidate->currency, 'ECONOMY', self::now(),
+            ],
+        );
+    }
+
     /**
      * Typical fare for a route in a given departure month.
      *
@@ -263,6 +277,46 @@ final class DealRepository
         );
     }
 
+    /**
+     * Premium deals a non-premium viewer cannot open yet, as teasers: the route
+     * and the discount, never the price or the dates. Showing that these exist
+     * is the whole argument for upgrading; showing the fare would give it away.
+     */
+    public function lockedDeals(int $limit = 6): array
+    {
+        $now = self::now();
+        return Db::query(
+            "SELECT d.id, d.discount, d.is_mistake, d.cabin, d.found_at, r.label, r.origin, r.destination
+             FROM deals d JOIN routes r ON r.id = d.route_id
+             WHERE d.status = 'active' AND d.expires_at > ?
+               AND (d.tier = 'premium' OR d.publish_free_at > ?)
+             ORDER BY d.discount DESC
+             LIMIT $limit",
+            [$now, $now],
+        );
+    }
+
+    /** Headline numbers for the board. */
+    public function stats(): array
+    {
+        $now = self::now();
+        $row = Db::one(
+            "SELECT COUNT(*) AS live, AVG(discount) AS avg_discount, MAX(discount) AS best_discount
+             FROM deals WHERE status = 'active' AND expires_at > ?",
+            [$now],
+        ) ?? [];
+        $routes = Db::one('SELECT COUNT(*) AS c FROM routes WHERE active = 1');
+        $observations = Db::one('SELECT COUNT(*) AS c FROM fare_history');
+
+        return [
+            'live'          => (int) ($row['live'] ?? 0),
+            'avg_discount'  => (float) ($row['avg_discount'] ?? 0),
+            'best_discount' => (float) ($row['best_discount'] ?? 0),
+            'routes'        => (int) ($routes['c'] ?? 0),
+            'observations'  => (int) ($observations['c'] ?? 0),
+        ];
+    }
+
     public function findDeal(int $id): ?array
     {
         return Db::one(
@@ -309,8 +363,9 @@ final class DealRepository
             [
                 self::now(),
                 $stats['routes'] ?? 0,
-                $stats['offers'] ?? 0,
-                $stats['kept'] ?? 0,
+                // Two-stage counts candidates where single-stage counts offers.
+                $stats['offers'] ?? $stats['candidates'] ?? 0,
+                $stats['kept'] ?? $stats['screened'] ?? 0,
                 $stats['deals'] ?? 0,
                 $errors === [] ? null : implode("\n", array_slice($errors, 0, 20)),
                 $runId,

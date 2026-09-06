@@ -1,7 +1,8 @@
 <?php
-/** One deal, with the itinerary and the numbers behind the discount. */
+/** One deal: the itinerary, and the numbers behind the discount. */
 
 require __DIR__ . '/_init.php';
+require __DIR__ . '/_layout.php';
 
 use Zomunk\Money;
 use Zomunk\Offer;
@@ -19,7 +20,7 @@ if ($deal === null) {
     $deal = null;
     $message = $viewer['email'] === null
         ? 'This deal is for members. Sign up on the deal board to get it.'
-        : 'Premium members see this one first. It opens up to free members shortly.';
+        : 'Premium members see this one first. It opens to free members shortly.';
 } elseif ($deal['status'] !== 'active') {
     $message = 'This fare has expired. Airlines rarely leave these up for long.';
 } else {
@@ -27,74 +28,65 @@ if ($deal === null) {
 }
 
 $offer = $deal !== null ? json_decode((string) $deal['offer_json'], true) : null;
+
+zomunk_head($deal !== null ? $deal['label'] . ' - Flight Deal Alerts' : 'Deal not available');
 ?>
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title><?= $deal !== null ? e($deal['label']) : 'Deal not available' ?> - Zomunk Lite</title>
-<link rel="stylesheet" href="assets/style.css">
-</head>
-<body>
-<div class="wrap">
-<header class="site"><h1><a href="index.php" style="text-decoration:none;color:inherit;">Zomunk Lite</a></h1></header>
 
 <?php if ($message !== null): ?>
-  <div class="flash err"><?= e($message) ?></div>
+  <div class="flash err" style="margin-top:28px;"><?= e($message) ?></div>
+  <p><a class="btn" href="index.php">Back to the deal board</a></p>
 <?php endif; ?>
 
 <?php if ($deal !== null): ?>
-<section class="panel">
+<section class="panel" style="margin-top:28px;">
   <h2>
     <?= e($deal['label']) ?>
-    <?php if ((int) $deal['is_mistake'] === 1): ?><span class="badge hot">MISTAKE FARE</span><?php endif; ?>
+    <?php if ((int) $deal['is_mistake'] === 1): ?> <span class="badge hot">MISTAKE FARE</span><?php endif; ?>
   </h2>
-  <p>
-    <span class="price" style="font-size:30px;font-weight:700;">
+  <p style="margin:14px 0 20px;">
+    <span class="price" style="font-size:32px;font-weight:750;">
       <?= e(Money::format((float) $deal['price'], $deal['currency'])) ?>
     </span>
-    <span class="was"><?= e(Money::format((float) $deal['typical_fare'], $deal['currency'])) ?></span>
-    <span class="badge"><?= (int) round((float) $deal['discount'] * 100) ?>% off</span>
+    <span class="was" style="margin-left:10px;"><?= e(Money::format((float) $deal['typical_fare'], $deal['currency'])) ?></span>
+    <span class="badge" style="margin-left:8px;"><?= (int) round((float) $deal['discount'] * 100) ?>% off</span>
   </p>
 
   <dl class="spec">
     <dt>Dates</dt>
     <dd><?= e($deal['depart_date']) ?><?= $deal['return_date'] ? ' &rarr; ' . e($deal['return_date']) : '' ?></dd>
     <dt>Airline</dt><dd><?= e($deal['carrier_name'] ?: $deal['carrier_code']) ?></dd>
-    <dt>Cabin</dt><dd><?= e($deal['cabin']) ?></dd>
+    <dt>Cabin</dt><dd><?= e(ucfirst(strtolower($deal['cabin']))) ?></dd>
     <dt>Stops</dt>
     <dd><?= (int) $deal['stops'] === 0 ? 'Non-stop' : e($deal['stops'] . ' via ' . $deal['layovers']) ?></dd>
     <dt>Longest direction</dt><dd><?= e(Offer::formatMinutes((int) $deal['duration_minutes'])) ?></dd>
     <dt>Checked bag</dt><dd><?= (int) $deal['bag_included'] === 1 ? 'Included' : 'Not included' ?></dd>
     <dt>Typical fare from</dt>
-    <dd><?= $deal['baseline_source'] === 'observed' ? 'our observed price history for this route' : 'the configured seed estimate' ?></dd>
+    <dd><?= $deal['baseline_source'] === 'observed' ? 'our recorded price history for this route' : 'the configured seed estimate' ?></dd>
     <dt>Found</dt><dd><?= e($deal['found_at']) ?> UTC</dd>
-    <dt>Expires from board</dt><dd><?= e($deal['expires_at']) ?> UTC</dd>
+    <dt>Off the board</dt><dd><?= e($deal['expires_at']) ?> UTC</dd>
   </dl>
 
-  <p style="margin-top:20px;">
+  <p style="margin-top:24px;">
     <a class="btn" href="<?= e($deal['booking_url']) ?>" target="_blank" rel="noopener">Open in Google Flights</a>
     <a class="btn ghost" href="index.php">Back to deals</a>
-  </p>
-  <p class="note">
-    Prices move fast and this fare may already be gone. Book with the airline or an OTA &mdash;
-    Zomunk Lite never takes a booking or a payment.
   </p>
 </section>
 
 <?php if (is_array($offer)): ?>
 <section class="panel">
   <h2>Itinerary</h2>
+  <p class="note">Exactly what we priced. Confirm it on Google Flights before booking &mdash; fares move.</p>
   <?php foreach ($offer['itineraries'] as $index => $segments): ?>
-    <p class="note"><strong><?= $index === 0 ? 'Outbound' : 'Return' ?></strong></p>
+    <h3 style="font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:18px 0 10px;">
+      <?= $index === 0 ? 'Outbound' : 'Return' ?>
+    </h3>
     <dl class="spec">
       <?php foreach ($segments as $segment): ?>
         <dt><?= e($segment['from']) ?> &rarr; <?= e($segment['to']) ?></dt>
         <dd>
           <?= e(date('D d M, H:i', strtotime($segment['depart_at']))) ?>
           &rarr; <?= e(date('D d M, H:i', strtotime($segment['arrive_at']))) ?>
-          &middot; <?= e($segment['carrier'] . ' ' . $segment['number']) ?>
+          &middot; <?= e(trim($segment['carrier'] . ' ' . $segment['number'])) ?>
         </dd>
       <?php endforeach; ?>
     </dl>
@@ -103,6 +95,4 @@ $offer = $deal !== null ? json_decode((string) $deal['offer_json'], true) : null
 <?php endif; ?>
 <?php endif; ?>
 
-</div>
-</body>
-</html>
+<?php zomunk_foot(); ?>

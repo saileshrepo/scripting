@@ -89,11 +89,45 @@ try {
     bad('connection', $e->getMessage());
 }
 
-// --- fare provider ---------------------------------------------------------
+// --- stage 1: wide sweep ---------------------------------------------------
 
-echo "\nFare provider (ZOMUNK_PROVIDER={$config['provider']})\n";
+echo "\nStage 1 sweep (ZOMUNK_CANDIDATE_PROVIDER={$config['candidate_provider']})\n";
 
-if ($config['provider'] === 'sample') {
+if ($config['candidate_provider'] === 'none') {
+    warn('sweep', 'disabled — every date is priced with a metered call, which burns a free tier fast');
+} elseif ($config['candidate_provider'] === 'sample') {
+    warn('sweep', 'sample = synthetic offline prices. Set ZOMUNK_CANDIDATE_PROVIDER=travelpayouts for real data.');
+} elseif ($config['candidate_provider'] === 'travelpayouts') {
+    if ($config['travelpayouts']['token'] === '') {
+        bad('token', 'TRAVELPAYOUTS_TOKEN is empty');
+    } else {
+        try {
+            $sweep = ProviderFactory::makeCandidateProvider('travelpayouts');
+            $month = (new DateTimeImmutable('+2 months'))->format('Y-m');
+            $found = $sweep->scanMonth(
+                ['origin' => 'DEL', 'destination' => 'DXB', 'currency' => 'INR'], $month, 7
+            );
+            $found === []
+                ? warn('live sweep', "DEL-DXB $month returned no cached prices")
+                : ok('live sweep', sprintf('DEL-DXB %s: %d date(s), cheapest %s',
+                    $month, count($found),
+                    number_format(min(array_map(static fn($c) => $c->price, $found)))));
+        } catch (Throwable $e) {
+            bad('live sweep', $e->getMessage());
+        }
+    }
+} else {
+    bad('sweep', "unknown candidate provider '{$config['candidate_provider']}'");
+}
+
+// --- stage 2: verification -------------------------------------------------
+
+echo "\nStage 2 verification (ZOMUNK_PROVIDER={$config['provider']})\n";
+
+if ($config['provider'] === 'none') {
+    warn('provider', 'disabled — candidates cannot be checked against a real itinerary, '
+        . 'so the layover, duration, transit-visa and bag rules never run');
+} elseif ($config['provider'] === 'sample') {
     warn('provider', 'sample = synthetic offline fares. Set ZOMUNK_PROVIDER=amadeus for real data.');
 } elseif ($config['provider'] === 'amadeus') {
     if ($config['amadeus']['client_id'] === '' || $config['amadeus']['client_secret'] === '') {
