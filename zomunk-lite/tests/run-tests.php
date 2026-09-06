@@ -242,6 +242,22 @@ test('rejects more than one stop', function () use ($route) {
     assertContainsMatch($rejections, 'too_many_stops');
 });
 
+test('a route may raise the stop limit for a tier-2 origin', function () {
+    // Raipur has no non-stop international service: one stop reaches the
+    // gateway, the second is the international connection.
+    $offer = makeOffer(['origin' => 'RPR', 'destination' => 'BKK', 'legs' => [[
+        ['RPR', 'DEL', '2026-11-10 02:00', '2026-11-10 04:00'],
+        ['DEL', 'BOM', '2026-11-10 06:00', '2026-11-10 08:00'],
+        ['BOM', 'BKK', '2026-11-10 10:00', '2026-11-10 16:00'],
+    ]]]);
+    $metroRules = ['max_duration_hours' => 20];
+    [$rejections] = makeEngine()->inspectItinerary($offer, $metroRules);
+    assertContainsMatch($rejections, 'too_many_stops', 'rejected under the global limit:');
+
+    [$rejections] = makeEngine()->inspectItinerary($offer, $metroRules + ['max_stops' => 2]);
+    assertSame([], $rejections, 'accepted once the route raises the limit:');
+});
+
 test('rejects a layover too tight to make', function () use ($route) {
     $offer = makeOffer(['legs' => [[
         ['DEL', 'DXB', '2026-11-10 02:00', '2026-11-10 04:00'],

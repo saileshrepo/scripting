@@ -39,6 +39,7 @@ return [
         // India (origins, never a "foreign" transit)
         'DEL' => 'IN', 'BOM' => 'IN', 'BLR' => 'IN', 'MAA' => 'IN', 'HYD' => 'IN',
         'CCU' => 'IN', 'COK' => 'IN', 'AMD' => 'IN', 'GOI' => 'IN', 'PNQ' => 'IN',
+        'RPR' => 'IN', 'NAG' => 'IN', 'BBI' => 'IN', 'LKO' => 'IN', 'IXC' => 'IN',
         // Africa
         'ADD' => 'ET', 'NBO' => 'KE', 'JNB' => 'ZA', 'CMN' => 'MA',
     ],

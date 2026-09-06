@@ -20,6 +20,7 @@ return [
         'currency'          => 'INR',
         'adults'            => 1,
         'max_duration_hours'=> 26,
+        'max_stops'         => null,   // null = use ZOMUNK_MAX_STOPS
         'scan'              => [
             'trip_nights'     => [7, 14],
             'months_ahead'    => 6,
@@ -63,5 +64,22 @@ return [
          'max_duration_hours' => 14],
         ['origin' => 'CCU', 'destination' => 'BKK', 'typical_fare_inr' => 20000, 'label' => 'Kolkata -> Bangkok',
          'max_duration_hours' => 12],
+
+        // --- Tier-2 origin: Raipur ------------------------------------------
+        // RPR has no meaningful non-stop international service, so every one of
+        // these needs a stop to reach a gateway (DEL/BOM/HYD) plus, often, an
+        // international connection. max_stops is raised to 2 for that reason;
+        // the trade-off is longer, less comfortable itineraries, which is why
+        // the duration caps are wider than the metro routes above.
+        ['origin' => 'RPR', 'destination' => 'DXB', 'typical_fare_inr' => 32000, 'label' => 'Raipur -> Dubai',
+         'max_duration_hours' => 18, 'max_stops' => 2],
+        ['origin' => 'RPR', 'destination' => 'BKK', 'typical_fare_inr' => 33000, 'label' => 'Raipur -> Bangkok',
+         'max_duration_hours' => 20, 'max_stops' => 2],
+        ['origin' => 'RPR', 'destination' => 'SIN', 'typical_fare_inr' => 38000, 'label' => 'Raipur -> Singapore',
+         'max_duration_hours' => 20, 'max_stops' => 2],
+        ['origin' => 'RPR', 'destination' => 'KUL', 'typical_fare_inr' => 35000, 'label' => 'Raipur -> Kuala Lumpur',
+         'max_duration_hours' => 20, 'max_stops' => 2],
+        ['origin' => 'RPR', 'destination' => 'HKT', 'typical_fare_inr' => 40000, 'label' => 'Raipur -> Phuket',
+         'max_duration_hours' => 22, 'max_stops' => 2],
     ],
 ];

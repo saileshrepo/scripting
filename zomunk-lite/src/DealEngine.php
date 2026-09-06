@@ -85,8 +85,12 @@ final class DealEngine
         $rejections = [];
         $flags = [];
 
-        if ($offer->maxStops() > $this->rules['max_stops']) {
-            $rejections[] = sprintf('too_many_stops(%d)', $offer->maxStops());
+        // Per-route override: a tier-2 origin with no non-stop international
+        // service needs one stop just to reach a gateway, so a global limit of
+        // one would reject every fare it could ever offer.
+        $maxStops = (int) ($route['max_stops'] ?? $this->rules['max_stops']);
+        if ($offer->maxStops() > $maxStops) {
+            $rejections[] = sprintf('too_many_stops(%d > %d)', $offer->maxStops(), $maxStops);
         }
 
         foreach ($offer->layovers() as $layover) {
