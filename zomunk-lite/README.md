@@ -28,6 +28,8 @@ From Zomunk's own site and help centre, the model is:
    see everything — mistake fares, peak-season drops, premium cabins.
 6. They are **not a booking platform**. You book through Google Flights, the
    airline, or an OTA — and fares can vanish mid-booking.
+7. They stay **independent and take no booking commission**, so a deal is picked on
+   value alone rather than on who pays for the referral.
 
 Sources: [zomunk.com](https://zomunk.com/), [FAQ](https://web.zomunk.com/faq),
 [What makes Zomunk unique](https://help.zomunk.com/en/article/what-makes-zomunk-unique-107slxw/),
@@ -45,6 +47,7 @@ Sources: [zomunk.com](https://zomunk.com/), [FAQ](https://web.zomunk.com/faq),
 | Deal dashboard | `public/index.php`, gated by the viewer's tier |
 | Email alerts | `bin/notify.php` → a Sender campaign per tier |
 | Not a booking platform | every deal links out to Google Flights |
+| Independent, no commission | booking links carry no affiliate or tracking parameters — keep it that way |
 
 Not built (deliberately out of scope for a basic version): payments and real
 premium billing, a proper login (tier is decided by a signup cookie), mobile push,
