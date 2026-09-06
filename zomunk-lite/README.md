@@ -42,6 +42,7 @@ Sources: [zomunk.com](https://zomunk.com/), [FAQ](https://web.zomunk.com/faq),
 | Continuous fare monitoring from Indian airports | `bin/scan.php` on a cron, over a configurable watchlist (`config/routes.php`) |
 | "At least 40% below the usual fare" | `DealEngine`, threshold in `ZOMUNK_MIN_DISCOUNT`, measured against a **median of observed history** per route and departure month |
 | Hand-picked itineraries | `DealEngine::inspectItinerary()` — stop count, layover window, total duration, checked bag, transit visa |
+| Major-airport coverage | metro origins plus Raipur, a tier-2 origin that needs a gateway hop — hence the per-route `max_stops` |
 | Mistake fares / premium-only deals | discount ≥ `ZOMUNK_PREMIUM_DISCOUNT`, or any non-economy cabin |
 | Free tier sees a delayed subset | `publish_free_at` = found + `ZOMUNK_FREE_DELAY_HOURS` |
 | Deal dashboard | `public/index.php`, gated by the viewer's tier |
@@ -155,7 +156,7 @@ All of it is `.env`, all of it is tested in `tests/run-tests.php`.
 | Minimum discount below typical | `ZOMUNK_MIN_DISCOUNT` | 0.40 |
 | Mistake fare / premium-only above | `ZOMUNK_PREMIUM_DISCOUNT` | 0.70 |
 | Free tier head start for premium | `ZOMUNK_FREE_DELAY_HOURS` | 24 |
-| Maximum stops | `ZOMUNK_MAX_STOPS` | 1 |
+| Maximum stops | `ZOMUNK_MAX_STOPS`, overridable per route | 2 |
 | Layover window | `ZOMUNK_MIN/MAX_LAYOVER_MINUTES` | 45–300 min |
 | Checked bag required | `ZOMUNK_REQUIRE_CHECKED_BAG` | on |
 | Maximum trip duration | per route in `config/routes.php` | 26 h |

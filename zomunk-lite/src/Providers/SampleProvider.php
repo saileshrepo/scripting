@@ -52,6 +52,10 @@ final class SampleProvider implements FlightProvider
                 $rand < 0.80 => 1,
                 default      => 2,
             };
+            // Drawn separately from $rand: deriving the layover from the same
+            // value as the stop count made every 2-stop itinerary exceed the
+            // layover cap, so the stop rules could never be the binding one.
+            $layoverRand = $this->pseudoRandom($seed + $i * 104729 + 17);
             $hub = self::HUBS[($seed + $i) % count(self::HUBS)];
             $bagIncluded = $rand > 0.2;
 
@@ -61,7 +65,7 @@ final class SampleProvider implements FlightProvider
                 $price,
                 $route['currency'] ?? 'INR',
                 $route['cabin'] ?? 'ECONOMY',
-                $this->buildItineraries($route, $departDate, $returnDate, $stops, $hub, $rand),
+                $this->buildItineraries($route, $departDate, $returnDate, $stops, $hub, $layoverRand),
                 $bagIncluded,
                 ['AI', 'EK', 'QR', 'LH', 'SQ'][($seed + $i) % 5],
                 null,
@@ -78,18 +82,31 @@ final class SampleProvider implements FlightProvider
         ?string $returnDate,
         int $stops,
         string $hub,
-        float $rand,
+        float $layoverRand,
     ): array {
-        $itineraries = [$this->buildLeg($route['origin'], $route['destination'], $departDate, $stops, $hub, $rand)];
+        $itineraries = [
+            $this->buildLeg($route['origin'], $route['destination'], $departDate, $stops, $hub, $layoverRand),
+        ];
         if ($returnDate !== null) {
-            $itineraries[] = $this->buildLeg($route['destination'], $route['origin'], $returnDate, $stops, $hub, $rand);
+            // The return leg draws a different layover so outbound and return
+            // are not mirror images, the way real itineraries are not.
+            $itineraries[] = $this->buildLeg(
+                $route['destination'], $route['origin'], $returnDate, $stops, $hub,
+                fmod($layoverRand + 0.37, 1.0),
+            );
         }
         return $itineraries;
     }
 
     /** @return Segment[] */
-    private function buildLeg(string $from, string $to, string $date, int $stops, string $hub, float $rand): array
-    {
+    private function buildLeg(
+        string $from,
+        string $to,
+        string $date,
+        int $stops,
+        string $hub,
+        float $layoverRand,
+    ): array {
         $depart = new DateTimeImmutable($date . ' 02:40');
         if ($stops === 0) {
             return [new Segment($from, $to, $depart, $depart->modify('+9 hours'), 'AI', '101')];
@@ -97,7 +114,7 @@ final class SampleProvider implements FlightProvider
 
         // Layover length swings from a tight 35 minutes to an ugly 7 hours so
         // the min/max layover gates get exercised.
-        $layoverMinutes = (int) round(35 + $rand * 385);
+        $layoverMinutes = (int) round(35 + $layoverRand * 385);
         $segments = [];
         $legFrom = $from;
         $cursor = $depart;

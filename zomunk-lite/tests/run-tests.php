@@ -106,6 +106,9 @@ function makeOffer(array $overrides = []): Offer
 
 function makeEngine(array $ruleOverrides = []): DealEngine
 {
+    // max_stops is 1 here on purpose, tighter than the shipped default of 2:
+    // these are rule tests, and the per-route override test below relies on the
+    // engine limit being lower than what the route asks for.
     $rules = array_merge([
         'min_discount'        => 0.40,
         'premium_discount'    => 0.70,

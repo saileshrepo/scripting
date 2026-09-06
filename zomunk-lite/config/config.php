@@ -99,7 +99,7 @@ function zomunk_config(): array
             'min_discount'       => zomunk_env_float('ZOMUNK_MIN_DISCOUNT', 0.40),
             'premium_discount'   => zomunk_env_float('ZOMUNK_PREMIUM_DISCOUNT', 0.70),
             'free_delay_hours'   => zomunk_env_int('ZOMUNK_FREE_DELAY_HOURS', 24),
-            'max_stops'          => zomunk_env_int('ZOMUNK_MAX_STOPS', 1),
+            'max_stops'          => zomunk_env_int('ZOMUNK_MAX_STOPS', 2),
             'min_layover'        => zomunk_env_int('ZOMUNK_MIN_LAYOVER_MINUTES', 45),
             'max_layover'        => zomunk_env_int('ZOMUNK_MAX_LAYOVER_MINUTES', 300),
             'require_bag'        => zomunk_env_bool('ZOMUNK_REQUIRE_CHECKED_BAG', true),
