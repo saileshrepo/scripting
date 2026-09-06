@@ -94,10 +94,18 @@ before trusting the percentages.
 cd zomunk-lite
 cp .env.example .env          # then edit it
 php bin/init-db.php           # creates the schema, loads the watchlist
+php bin/doctor.php            # preflight: runtime, database, provider, Sender
 php bin/scan.php --months=2   # ZOMUNK_PROVIDER=sample by default: no keys needed
 php bin/notify.php --dry-run  # writes var/preview-<tier>.html instead of sending
 php -S localhost:8000 -t public
 ```
+
+`php bin/doctor.php` is the one to run whenever something looks wrong. It checks
+the PHP version and extensions, that `var/` is writable, the database and
+watchlist, then makes a **real** Amadeus search and a **real** Sender groups call
+with your credentials — so a bad token, a wrong group id or an exhausted quota
+shows up there instead of silently inside a 3am cron. It exits non-zero if
+anything required is broken.
 
 `ZOMUNK_PROVIDER=sample` runs the entire pipeline offline against synthetic fares,
 including itineraries the filters are supposed to reject. Use it to see the shape
@@ -147,6 +155,41 @@ add one.
 15 3             * * *   php /path/to/zomunk-lite/bin/resync-subscribers.php
 ```
 
+## Running it on your own machine
+
+Everything runs locally — there is no build step, no Composer install and no
+service to sign up for before the offline mode works.
+
+**Requirements:** PHP 8.1+ with `pdo`, `pdo_sqlite`, `curl` and `json`. That is a
+default PHP install on macOS (`brew install php`), Debian/Ubuntu
+(`sudo apt install php-cli php-sqlite3 php-curl`) or Windows via the official
+PHP zip or XAMPP.
+
+```bash
+git clone <this repo> && cd scripting/zomunk-lite
+cp .env.example .env
+php bin/init-db.php
+php bin/scan.php --months=2
+php -S localhost:8000 -t public   # then open http://localhost:8000
+```
+
+That gets you the whole pipeline on synthetic fares in about a minute. To see the
+free-tier board without waiting out the 24 hour head start, set
+`ZOMUNK_FREE_DELAY_HOURS=0` in `.env` and re-scan.
+
+Switching to real fares is two lines in `.env` (`ZOMUNK_PROVIDER=amadeus` plus the
+client id and secret) and `php bin/doctor.php` to confirm. Note that the API hosts
+must be reachable from wherever you run it: a locked-down network, a corporate
+proxy or a sandboxed CI runner may block `test.api.amadeus.com` and
+`api.sender.net` outright, in which case the scan falls back to errors in the log
+rather than fares. `bin/doctor.php` will tell you that in one line.
+
+For a persistent setup, point a real web server at `public/` (it is the only
+directory that should be web-accessible — `src/`, `config/`, `var/` and `.env`
+must stay outside the document root), put `bin/scan.php` and `bin/notify.php` on
+cron, and move `ZOMUNK_DB_DSN` to MySQL using `schema.mysql.sql` if you would
+rather not run on SQLite.
+
 ## The deal rules
 
 All of it is `.env`, all of it is tested in `tests/run-tests.php`.
@@ -187,7 +230,7 @@ queries, and HTML escaping in the email.
 ## Layout
 
 ```
-bin/       scan, notify, init-db, sender-check, resync-subscribers
+bin/       doctor, scan, notify, init-db, sender-check, resync-subscribers
 config/    routes watchlist, transit visa table, env loading
 public/    dashboard, deal page, signup handler
 src/       DealEngine (the rules), Scanner, DealRepository, providers, Sender client
